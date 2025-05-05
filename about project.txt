@@ -1,0 +1,67 @@
+
+ “Job Portal App”
+💡 Description:
+Ek simple job portal jisme do roles honge — Recruiter aur Job Seeker.
+
+Recruiter job post karega (CRUD).
+
+Job Seeker profile create karega, jobs browse karega, apply karega.
+
+Authentication system with JWT.
+
+Protected routes, role-based access.
+
+Image upload (resume/profile).
+
+Dashboard for both users.
+
+:brick: Tech Stack:
+Frontend (Next.js):
+Next.js App Router (or Pages Router)
+
+Tailwind CSS (for styling)
+
+Axios (for API calls)
+
+JWT in cookies/localStorage
+
+Backend (Node.js + Express):
+Express
+
+MongoDB + Mongoose
+
+bcrypt (for password hashing)
+
+jsonwebtoken (for auth)
+
+multer (for file upload)
+
+cors, dotenv
+
+:puzzle_piece: Features to Implement:
+
+Authentication
+Signup / Login (JWT based)
+Password Hashing with bcrypt
+
+Role-based access (recruiter, jobseeker)
+
+User Profile
+View & Edit Profile
+Upload profile picture or resume (PDF)
+
+Job Module
+Recruiter: Add / Update / Delete / List Jobs
+Job Seeker: View Jobs, Apply on jobs
+
+Application Module
+Job Seeker can apply to a job
+Recruiter can see applicants list
+
+Dashboard
+Recruiter: Jobs created, applicants
+Job Seeker: Jobs applied
+
+Logout
+JWT clear on logout
+`
