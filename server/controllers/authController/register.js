@@ -1,14 +1,12 @@
-import userModel from "../../models/userModel";
+import userModel from "../../models/userModel.js";
 import bcrypt from "bcrypt";
-import { SendEmailOTP } from "../../Helpers/SendEmailOTP";
-import { SendPhoneOTP } from "../../Helpers/SendPhoneOTP";
+import { SendEmailOTP } from "../../Helpers/SendEmailOTP.js";
 
 export const register = async (req, res) => {
   try {
-    const { name, phone, email, password, role, profileImage, resume } =
-      req.body;
+    const { name, email, password, role, profileImage, resume } = req.body;
 
-    if (!name || !phone || !email || !password || !role) {
+    if (!name || !email || !password || !role) {
       return res
         .status(400)
         .json({ success: false, message: "All fields are required" });
@@ -17,51 +15,18 @@ export const register = async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
     const hashedPassword = await bcrypt.hash(password, 10);
-    const phoneOTP = Math.floor(100000 + Math.random() * 900000).toString();
     const emailOTP = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpireTime = new Date(Date.now() + 60 * 60 * 1000);
-
-    // if phone number is already verified
-
-    const existingPhoneUser = await userModel.findOne({ phone });
-    if (existingPhoneUser && existingPhoneUser.isPhoneVerified) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "User already registered with this phone number.",
-        });
-    }
-
-    // if email is already verified
 
     const existingEmailUser = await userModel.findOne({
       email: normalizedEmail,
     });
     if (existingEmailUser && existingEmailUser.isEmailVerified) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "User already registered with this email.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "User already registered with this email.",
+      });
     }
-
-    // registerd but phone not verified
-
-    if (existingPhoneUser && !existingPhoneUser.isPhoneVerified) {
-      existingPhoneUser.name = trimmedName;
-      existingPhoneUser.password = hashedPassword;
-      existingPhoneUser.phoneOTP = phoneOTP;
-      existingPhoneUser.phoneOTPExpire = otpExpireTime;
-      await existingPhoneUser.save();
-      await SendPhoneOTP(phone, phoneOTP);
-      return res
-        .status(200)
-        .json({ success: true, message: "New OTP sent to your phone number." });
-    }
-
-    // registeded but email not verified
 
     if (existingEmailUser && !existingEmailUser.isEmailVerified) {
       existingEmailUser.name = trimmedName;
@@ -69,7 +34,17 @@ export const register = async (req, res) => {
       existingEmailUser.emailOTP = emailOTP;
       existingEmailUser.emailOTPExpire = otpExpireTime;
       await existingEmailUser.save();
-      await SendEmailOTP(normalizedEmail, trimmedName, emailOTP);
+      const emailResult = await SendEmailOTP(
+        normalizedEmail,
+        trimmedName,
+        emailOTP
+      );
+      if (!emailResult.success) {
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to send email OTP" });
+      }
+
       return res
         .status(200)
         .json({ success: true, message: "New OTP sent to your email." });
@@ -77,12 +52,8 @@ export const register = async (req, res) => {
 
     const user = await userModel.create({
       name: trimmedName,
-      phone,
       email: normalizedEmail,
       password: hashedPassword,
-      phoneOTP,
-      phoneOTPExpire: otpExpireTime,
-      isPhoneVerified: false,
       emailOTP,
       emailOTPExpire: otpExpireTime,
       isEmailVerified: false,
@@ -91,12 +62,20 @@ export const register = async (req, res) => {
       resume: resume || "",
     });
 
-    await SendPhoneOTP(phone, phoneOTP);
-    await SendEmailOTP(normalizedEmail, trimmedName, emailOTP);
+    const emailResult = await SendEmailOTP(
+      normalizedEmail,
+      trimmedName,
+      emailOTP
+    );
+    if (!emailResult.success) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to send email OTP" });
+    }
 
     return res.status(201).json({
       success: true,
-      message: "Verification OTPs sent to your phone and email.",
+      message: "Verification OTPs sent to your  email.",
     });
   } catch (error) {
     console.error("Error in Register:", error);

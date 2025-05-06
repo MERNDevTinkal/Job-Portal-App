@@ -9,26 +9,7 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
   },
 
-  phone: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-
-  isPhoneVerified: {
-    type: Boolean,
-    default: false,
-  },
-
-  phoneOTP: {
-    type: String,
-  },
-
-  phoneOTPExpire: {
-    type: Date,
-  },
-
+  
   email: {
     type: String,
     required: true,

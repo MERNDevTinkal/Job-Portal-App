@@ -5,7 +5,7 @@ export const verificationEmailHTML = (name, emailOTP) => `
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; padding:40px; border-radius:8px; font-family: Arial, sans-serif;">
           <tr>
             <td align="center" style="padding-bottom:20px;">
-              <h1 style="color:#333;">TrueFeedback</h1>
+              <h1 style="color:#333;">Job Portal App</h1>
             </td>
           </tr>
           <tr>
@@ -29,7 +29,7 @@ export const verificationEmailHTML = (name, emailOTP) => `
           </tr>
           <tr>
             <td align="center" style="padding-top:40px; font-size:12px; color:#aaa;">
-              <p>&copy; ${new Date().getFullYear()} TrueFeedback. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} Job Portal App. All rights reserved.</p>
             </td>
           </tr>
         </table>

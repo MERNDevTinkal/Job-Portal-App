@@ -3,8 +3,8 @@ import dotenv from "dotenv"
 import connectDB from "./DB/dbConfig.js";
 import bodyParser  from "body-parser";
 import cookieParser from "cookie-parser";
-import path from "path";
 import cors from "cors"
+import allRoutes from "./routes/index.js";
 
 const app = express()
 
@@ -19,9 +19,7 @@ app.use(cors({
     credentials: true,
   }));
 
-//app.use("/api/v1/auth")
-
-
+allRoutes(app);
 
 app.get("/",(req,res)=>{
     res.send("Hello from server");
