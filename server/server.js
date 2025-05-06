@@ -4,7 +4,7 @@ import connectDB from "./DB/dbConfig.js";
 import bodyParser  from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors"
-import allRoutes from "./routes/index.js";
+import allRoutes from "./routes/router.js";
 
 const app = express()
 
