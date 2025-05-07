@@ -34,5 +34,5 @@ const jobSeekerProfileSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-const JobSeekerProfile = mongoose.model("JobSeekerProfile", jobSeekerProfileSchema);
-export default JobSeekerProfile;
+const JobSeekerModel = mongoose.model("JobSeekerProfile", jobSeekerProfileSchema);
+export default JobSeekerModel;

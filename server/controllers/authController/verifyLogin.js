@@ -1,4 +1,4 @@
-import userModel from "../models/userModel.js";
+import userModel from "../../models/userModel.js";
 import jwt from "jsonwebtoken";
 
 export const verify = async (req, res) => {
@@ -6,7 +6,7 @@ export const verify = async (req, res) => {
     try {
       const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
   
-      if (!token) {
+      if (!token) { 
         return res.status(401).json({
           success: false,
           message: "No token provided, authentication failed",

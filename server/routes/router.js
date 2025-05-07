@@ -1,9 +1,9 @@
 import authRouter from "./authRouter.js"
-import middlewareVerify from "./middlewareVerify.js"
+import profileRoute from "./profileRoute.js"
 
 const allRoutes = (app) =>{
     app.use("/api/v1/auth", authRouter);
-    app.use("/api/v1/middleware",middlewareVerify)
+    app.use("/api/v1/profile",profileRoute)
 
 }
 
