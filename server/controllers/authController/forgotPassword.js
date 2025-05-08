@@ -1,10 +1,25 @@
 import crypto from "crypto";
 import userModel from "../../models/userModel.js";
 import { sendResetEmail } from "../../Helpers/sendResetEmail.js";
+import { forgotPasswordSchema } from "../../validations/forgotPasswordSchema.js";
 
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    let validateddata;
+
+    try {
+      validateddata = forgotPasswordSchema.parse({
+        email,
+      });
+
+    } catch (error) {
+
+      return res.status(400).json({
+        success: false,
+        message: error.errors.map((err) => err.message).join(" ,"),
+      });
+    }
 
     const user = await userModel.findOne({ email });
     if (!user || !user.isEmailVerified) {

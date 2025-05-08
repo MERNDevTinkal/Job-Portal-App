@@ -1,26 +1,41 @@
 import userModel from "../../models/userModel.js";
 import bcrypt from "bcrypt";
 import { SendEmailOTP } from "../../Helpers/SendEmailOTP.js";
+import { registerSchema } from "../../validations/registerSchema.js";
 
 export const register = async (req, res) => {
+  
   try {
     const { name, email, password, role, profileImage, resume } = req.body;
 
-    if (!name || !email || !password || !role) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required" });
+   
+    let validatedData;
+    try {
+      validatedData = registerSchema.parse({
+        name,
+        email,
+        password,
+        role,
+        profileImage,
+        resume,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.errors.map(err => err.message).join(", "),
+      });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const trimmedName = name.trim();
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const normalizedEmail = validatedData.email; 
+    const trimmedName = validatedData.name; 
+    const hashedPassword = await bcrypt.hash(validatedData.password, 10);
     const emailOTP = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpireTime = new Date(Date.now() + 60 * 60 * 1000);
 
     const existingEmailUser = await userModel.findOne({
       email: normalizedEmail,
     });
+
     if (existingEmailUser && existingEmailUser.isEmailVerified) {
       return res.status(400).json({
         success: false,
@@ -34,6 +49,7 @@ export const register = async (req, res) => {
       existingEmailUser.emailOTP = emailOTP;
       existingEmailUser.emailOTPExpire = otpExpireTime;
       await existingEmailUser.save();
+
       const emailResult = await SendEmailOTP(
         normalizedEmail,
         trimmedName,
@@ -57,7 +73,7 @@ export const register = async (req, res) => {
       emailOTP,
       emailOTPExpire: otpExpireTime,
       isEmailVerified: false,
-      role,
+      role: validatedData.role, 
       profileImage: profileImage || "",
       resume: resume || "",
     });
@@ -75,7 +91,7 @@ export const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Verification OTPs sent to your  email.",
+      message: "Verification OTPs sent to your email.",
     });
   } catch (error) {
     console.error("Error in Register:", error);

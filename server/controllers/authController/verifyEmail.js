@@ -1,14 +1,21 @@
-// controllers/authController/verifyEmail.js
 import userModel from "../../models/userModel.js";
-import { sendWelcomeEmail } from "../../Helpers/WelcomeEmail.js"
+import { sendWelcomeEmail } from "../../Helpers/WelcomeEmail.js";
+import { verifyEmailSchema } from "../../validations/verifyEmailSchema.js";
 
 export const VerifyEmail = async (req, res) => {
-  try {
-    const { verificationCode } = req.body;
+  let validatedData;
 
-    if (!verificationCode) {
-      return res.status(400).json({ success: false, message: "Code required" });
-    }
+  try {
+    validatedData = verifyEmailSchema.parse(req.body);
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.errors?.[0]?.message || "Invalid input",
+    });
+  }
+
+  try {
+    const { verificationCode } = validatedData;
 
     const user = await userModel.findOne({ emailOTP: verificationCode });
 
@@ -47,4 +54,3 @@ export const VerifyEmail = async (req, res) => {
     });
   }
 };
-

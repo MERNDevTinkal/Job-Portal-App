@@ -1,16 +1,23 @@
 import userModel from "../../models/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { loginSchema } from "../../validations/loginSchema.js";
 
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    let validateddata;
 
-    if (!email || !password) {
+    try {
+      validateddata = loginSchema.parse({
+        email,
+        password
+      })
+    } catch (error) {
       return res.status(400).json({
-        success: false,
-        message: "All fields are required.",
-      });
+        success : false,
+        message : error.errors.map(err => err.message).join(" ,"),
+      })
     }
 
     const existingUser = await userModel.findOne({ email });
@@ -50,7 +57,6 @@ export const login = async (req, res) => {
       process.env.SECRET_KEY,
       { expiresIn: "1d" }
     );
-
 
     return res
       .status(200)

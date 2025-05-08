@@ -1,12 +1,26 @@
 import userModel from "../../models/userModel.js";
 import bcrypt from "bcrypt";
+import { resetPasswordSchema } from "../../validations/resetPasswordSchema.js";
 
 export const resetPassword = async (req, res) => {
   try {
     const { newPassword, token } = req.body;
+    let validateddata;
+
+    try {
+      validateddata = resetPasswordSchema.parse({
+        newPassword,
+        token,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.errors.map((err) => err.message).join(" ,"),
+      });
+    }
 
     const user = await userModel.findOne({ forgotPasswordToken: token });
-   // console.log("User found for token:", user);
+    // console.log("User found for token:", user);
 
     if (!user) {
       return res.status(400).json({
