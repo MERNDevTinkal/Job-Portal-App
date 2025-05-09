@@ -7,7 +7,7 @@ export const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s])
 
 export const nameValidation = z
   .string()
-  .trim()
+  //.trim()
   .min(3, "Name must be at least 3 characters long")
   .regex(nameRegex, "Name must contain only letters with no spaces or numbers");
 
