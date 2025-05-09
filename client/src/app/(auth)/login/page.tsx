@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@/schema/loginSchema";
+import { loginSchema } from "../../../schema/authschema/loginSchema";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -29,6 +29,9 @@ export const LoginPage = () => {
     setLoading(true);
     try {
       const res = await loginUser(data);
+      if(res.token){
+        localStorage.setItem("token", res.token);
+      }
       toast.success(res.message || "Login Successful");
       router.push("/dashboard");
     } catch (error: any) {
@@ -75,16 +78,28 @@ export const LoginPage = () => {
               {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
             </div>
 
-            {/* Submit */}
+            {/* Forgot Password Button */}
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => router.push("/forgotPassword")}
+                className="text-blue-600 hover:underline text-sm cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            {/* Submit Button */}
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 text-white font-semibold rounded-md py-2 hover:bg-blue-600 transition-all duration-300"
+              className="w-full bg-blue-500 text-white font-semibold rounded-md py-2 hover:bg-blue-600 transition-all duration-300 hover:cursor-pointer "
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
 
+          {/* Register Link */}
           <p className="text-sm text-center mt-4">
             Don’t have an account?{" "}
             <span

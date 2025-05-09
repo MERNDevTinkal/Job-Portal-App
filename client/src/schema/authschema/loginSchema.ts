@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { emailValidation } from "./authschema/registerSchema";
-import { passwordValidation } from "./authschema/registerSchema";
+import { emailValidation } from "./registerSchema"
+import { passwordValidation } from "./registerSchema"
 
 export const loginSchema = z.object({
     email : emailValidation,

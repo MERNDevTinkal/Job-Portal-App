@@ -1,5 +1,6 @@
 import axiosInstance from "@/lib/axios";
 import { RegisterData } from "@/types/register";
+import axios from "axios";
 
 export const registerUser = async (data: RegisterData) => {
     try {
@@ -7,6 +8,10 @@ export const registerUser = async (data: RegisterData) => {
         return response.data;
     } catch (error) {
         console.error("Registration error:", error);
-        throw new Error("Something went wrong during registration.");
+        if (axios.isAxiosError(error) && error.response) {
+            throw new Error(error.response.data.message || "Registration failed");
+        } else {
+            throw new Error("Registration failed");
+        }
     }
 };

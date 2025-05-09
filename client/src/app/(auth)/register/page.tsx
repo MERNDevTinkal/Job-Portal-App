@@ -35,7 +35,8 @@ export default function RegisterPage() {
     try {
       const res = await registerUser(data);
       toast.success(res.message || "Registration successful");
-      router.push("/login");
+      localStorage.setItem("userEmail", data.email);
+      router.push("/verify-email");
     } catch (error: any) {
       toast.error(error.message || "Registration failed");
     } finally {

@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 
-export const nameRegex = /^[A-Za-z]{3,}$/;
+export const nameRegex = /^(?=(?:.*[A-Za-z]){3,})[A-Za-z ]+$/;
 export const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s])[^\s]{8,}$/;
 
