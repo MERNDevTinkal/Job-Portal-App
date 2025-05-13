@@ -1,11 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axiosInstance from '@/lib/axios'
 
+
 export const verifyLogin = createAsyncThunk('auth/verifyLogin', async (_, thunkAPI) => {
   try {
-    const res = await axiosInstance.get('/verifyLogin')
+    const res = await axiosInstance.get('/auth/verifyLogin')
+    console.log("verifyApi",res)
     return res.data
   } catch (err: any) {
+    
     return thunkAPI.rejectWithValue(err.response?.data || 'Something went wrong')
   }
 })

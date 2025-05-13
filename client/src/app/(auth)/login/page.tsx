@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "../../../schema/authschema/loginSchema";
+import { loginSchema } from "@/schema/authschema/loginSchema";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { store } from "@/redux/store";
+import { verifyLogin } from "@/redux/features/auth/authSlice";
 
 type FormData = z.infer<typeof loginSchema>;
 
@@ -29,13 +31,29 @@ export const LoginPage = () => {
     setLoading(true);
     try {
       const res = await loginUser(data);
-      if(res.token){
-        localStorage.setItem("token", res.token);
+
+      if (!res?.token) {
+        throw new Error(res?.message || "Invalid login response");
       }
+
+      localStorage.setItem("token", res.token);
       toast.success(res.message || "Login Successful");
-      router.push("/dashboard");
+
+      const result = await store.dispatch(verifyLogin());
+      const user = result?.payload?.user;
+
+      if (!user) {
+        throw new Error("User verification failed");
+      }
+
+      if (user.role === "recruiter") {
+        router.push("/dashboardForRecruiter");
+      } else {
+        router.push("/dashboard");
+      }
+
     } catch (error: any) {
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -49,17 +67,18 @@ export const LoginPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Email */}
+            {/* Email Field */}
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
                 {...register("email")}
                 placeholder="Enter Email"
+                disabled={loading}
               />
               {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
             </div>
 
-            {/* Password */}
+            {/* Password Field */}
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -67,6 +86,7 @@ export const LoginPage = () => {
                   {...register("password")}
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter Password"
+                  disabled={loading}
                 />
                 <span
                   onClick={() => setShowPassword(!showPassword)}
@@ -78,12 +98,13 @@ export const LoginPage = () => {
               {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
             </div>
 
-            {/* Forgot Password Button */}
+            {/* Forgot Password */}
             <div className="flex justify-end mt-2">
               <button
                 type="button"
                 onClick={() => router.push("/forgotPassword")}
                 className="text-blue-600 hover:underline text-sm cursor-pointer"
+                disabled={loading}
               >
                 Forgot Password?
               </button>
@@ -93,7 +114,7 @@ export const LoginPage = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 text-white font-semibold rounded-md py-2 hover:bg-blue-600 transition-all duration-300 hover:cursor-pointer "
+              className="w-full bg-blue-500 text-white font-semibold rounded-md py-2 hover:bg-blue-600 transition-all duration-300"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>

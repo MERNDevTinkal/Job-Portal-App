@@ -31,6 +31,12 @@ const jobSchema = new mongoose.Schema(
       required: true,
     },
 
+    recruiterProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RecruiterProfile",
+      required: true,
+    },
+
     applicants: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -42,6 +48,7 @@ const jobSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 1,
+      min: [1, "Openings must be at least 1"],
     },
 
     isActive: {
