@@ -1,4 +1,5 @@
 import RecruiterProfileModel from "../../../models/recruiterProfileModel.js";
+import { uploadMiddleware } from "../../../lib/multerConfig.js";
 
 export const createRecruiterProfile = async (req, res) => {
   try {
@@ -16,23 +17,27 @@ export const createRecruiterProfile = async (req, res) => {
       });
     }
 
-    const profile = await RecruiterProfileModel.create({
+    const profileData = {
       userId: req.user._id,
       companyName,
       companyWebsite,
       companyDescription,
       companyLocation,
-    });
+    };
+
+    if (req.file) {
+      profileData.profileImage = `/uploads/${req.file.filename}`;
+    }
+
+    const profile = await RecruiterProfileModel.create(profileData);
 
     res.status(201).json({
       success: true,
       message: "Recruiter profile created successfully",
       profile,
     });
-
   } catch (error) {
-    
-    console.log("error in creating recruiterProfile", error);
+    console.log("Error in creating recruiterProfile", error);
     res.status(500).json({
       success: false,
       message: "Failed to create profile",

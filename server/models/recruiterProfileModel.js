@@ -26,6 +26,12 @@ const recruiterProfileSchema = new mongoose.Schema({
     required: true,  
   },
 
+  profileImage: {
+    type: String,
+    default: "",
+  },
+
+
 }, {
   timestamps: true,
 });

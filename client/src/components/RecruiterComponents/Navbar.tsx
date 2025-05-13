@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { logOutUser } from "@/actions/auth/logout";
 import { useRouter } from "next/navigation";
+import { logOutUser } from "@/actions/auth/logout";
+import { toast } from "sonner";
 
 const Navbar = () => {
 
@@ -12,18 +12,18 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logOutUser();
-      localStorage.removeItem("token");
+      toast.success("Logged out successfully");
       router.push("/login");
-    } catch (error) {
-      console.error("Logout Error:", error);
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
   return (
-    <nav className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-semibold">Recruiter Dashboard</h1>
-      <div>
-        <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700">
+    <nav className="w-full p-4 bg-blue-700 text-white flex justify-between items-center">
+      <h1 className="text-xl font-semibold">Recruiter Panel</h1>
+      <div className="flex gap-4">
+        <Button onClick={handleLogout} className="bg-red-600 hover:bg-red-700">
           Logout
         </Button>
       </div>
