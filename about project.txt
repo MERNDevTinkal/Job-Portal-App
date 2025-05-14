@@ -64,4 +64,10 @@ Job Seeker: Jobs applied
 
 Logout
 JWT clear on logout
+
+
+update skills array 
+salary input 
+location  county state city 
+category dropdown 
 `

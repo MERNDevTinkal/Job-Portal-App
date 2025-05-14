@@ -2,7 +2,10 @@ import JobModel from "../../models/jobModel.js";
 
 export const getAllJobs = async (req, res) => {
   try {
-    const jobs = await JobModel.find({ isActive: true })
+    const jobs = await JobModel.find({
+      isActive: true,
+      recruiter: req.user._id,
+    })
       .populate({
         path: "recruiter",
         select: "name email",

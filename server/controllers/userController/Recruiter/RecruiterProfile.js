@@ -23,7 +23,9 @@ export const createRecruiterProfile = async (req, res) => {
       companyWebsite,
       companyDescription,
       companyLocation,
+      profileImage
     };
+
 
     if (req.file) {
       profileData.profileImage = `/uploads/${req.file.filename}`;
