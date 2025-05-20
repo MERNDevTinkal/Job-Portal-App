@@ -12,22 +12,40 @@ export const createJob = async (req, res) => {
       });
     }
 
-    const { title, description, jobType, salary, openings } = parsed.data;
-
-    const job = await JobModel.create({
+    const {
       title,
-      description,
+      skills,
       jobType,
       salary,
+      experience,
       openings,
+      jobCategory,
+    } = parsed.data;
+
+    // Create a new job
+    const job = await JobModel.create({
+      title,
+      skills,
+      jobType,
+      salary,
+      experience,
+      openings,
+      jobCategory,
       recruiter: req.user._id,
       recruiterProfile: req.recruiterProfile._id,
     });
 
+    // Format response to include "LPA" and "years"
+    const formattedJob = {
+      ...job.toObject(),
+      salaryRange: `${job.salary.min} - ${job.salary.max} LPA`,
+      experienceRange: `${job.experience.min} - ${job.experience.max} years`,
+    };
+
     res.status(201).json({
       success: true,
       message: "Job created successfully",
-      job,
+      job: formattedJob,
     });
   } catch (error) {
     console.error("Create Job Error:", error);

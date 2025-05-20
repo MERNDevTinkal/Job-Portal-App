@@ -8,10 +8,34 @@ const jobSchema = new mongoose.Schema(
       trim: true,
     },
 
-    description: {
+    skills: [
+      {
+        type: String,
+        required: true,
+        trim: true,
+      },
+    ],
+
+    jobCategory: {
       type: String,
+      enum: [
+        "IT & Software",
+        "Marketing & Sales",
+        "Finance & Accounting",
+        "Healthcare & Medicine",
+        "Education & Training",
+        "Engineering",
+        "Design & Creative",
+        "Human Resources",
+        "Customer Service",
+        "Administration",
+        "Construction & Trades",
+        "Hospitality & Tourism",
+        "Legal",
+        "Science & Research",
+        "Other",
+      ],
       required: true,
-      trim: true,
     },
 
     jobType: {
@@ -21,8 +45,34 @@ const jobSchema = new mongoose.Schema(
     },
 
     salary: {
-      type: String,
-      required: true,
+      min: {
+        type: Number,
+        required: true,
+        min: [0, "Min salary cannot be negative"],
+      },
+      max: {
+        type: Number,
+        required: true,
+        validate: {
+          validator: function (v) {
+            return v >= this.salary.min;
+          },
+          message: "Max salary must be greater than or equal to min salary",
+        },
+      },
+    },
+
+    experience: {
+      min: {
+        type: Number,
+        required: true,
+        min: [0, "Min experience cannot be negative"],
+      },
+      max: {
+        type: Number,
+        required: true,
+        min: [0, "Max experience cannot be negative"],
+      },
     },
 
     recruiter: {

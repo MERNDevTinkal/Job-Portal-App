@@ -8,7 +8,6 @@ import { getJobSeekerProfile } from '../controllers/userController/jobseeker/get
 import { updateJobSeekerProfile } from '../controllers/userController/jobseeker/updateJobSeekerProfile.js';
 import { getRecruiterProfile } from '../controllers/userController/Recruiter/getRecruiterProfile.js';
 import { updateRecruiterProfile } from '../controllers/userController/Recruiter/updateRecruiterProfile.js';
-import { uploadMiddleware } from '../lib/multerConfig.js';
 
  const router = express.Router();
 
@@ -18,9 +17,9 @@ router.get("/jobseeker", isAuthenticated, verifyjobseeker, getJobSeekerProfile);
 router.put("/jobseeker", isAuthenticated, verifyjobseeker, updateJobSeekerProfile);
 
 // Recruiter Routes
-router.post("/recruiter", isAuthenticated , verifyRecruiter,uploadMiddleware, createRecruiterProfile);
+router.post("/recruiter", isAuthenticated , verifyRecruiter, createRecruiterProfile);
 router.get("/recruiter", isAuthenticated, verifyRecruiter, getRecruiterProfile);
-router.put("/recruiter",isAuthenticated,verifyRecruiter,uploadMiddleware,updateRecruiterProfile)
+router.put("/recruiter",isAuthenticated,verifyRecruiter,updateRecruiterProfile)
 
 
 export default router;

@@ -1,8 +1,15 @@
 export interface CreateJobInput {
   title: string;
-  description: string;
+  skills: string[]; 
   jobType: "full-time" | "part-time" | "internship" | "remote";
-  salary: string;
+  salary: {
+    min: number;
+    max: number;
+  };
+  experience: {
+    min: number;
+    max: number;
+  };
   openings: number;
+  jobCategory: string;
 }
-

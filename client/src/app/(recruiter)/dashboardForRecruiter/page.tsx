@@ -26,9 +26,27 @@ import { updateJob } from "@/actions/recruiter/editJob";
 import { getAllJobs } from "@/actions/recruiter/getAllJobs";
 import { deleteJob } from "@/actions/recruiter/deleteJob";
 import Navbar from "@/components/RecruiterComponents/Navbar";
-import ProfileManager from "../ProfileManager/page";
+import RecruiterProfileDialog from "../ProfileManager/page";
 
 type FormData = z.infer<typeof createJobSchema>;
+
+const jobCategories = [
+  "IT & Software",
+  "Marketing & Sales",
+  "Finance & Accounting",
+  "Healthcare & Medicine",
+  "Education & Training",
+  "Engineering",
+  "Design & Creative",
+  "Human Resources",
+  "Customer Service",
+  "Administration",
+  "Construction & Trades",
+  "Hospitality & Tourism",
+  "Legal",
+  "Science & Research",
+  "Other",
+];
 
 const DashboardForRecruiter = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -50,10 +68,14 @@ const DashboardForRecruiter = () => {
     resolver: zodResolver(createJobSchema),
     defaultValues: {
       title: "",
-      description: "",
+      skills: "",
       jobType: "full-time",
-      salary: "",
+      salaryMin: 0,
+      salaryMax: 0,
+      experienceMin: 0,
+      experienceMax: 0,
       openings: 1,
+      jobCategory: "",
     },
   });
 
@@ -75,8 +97,24 @@ const DashboardForRecruiter = () => {
     fetchJobs();
   }, []);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     try {
+      const data = {
+        title: formData.title,
+        skills: formData.skills.split(',').map(skill => skill.trim()),
+        jobType: formData.jobType,
+        salary: {
+          min: formData.salaryMin,
+          max: formData.salaryMax,
+        },
+        experience: {
+          min: formData.experienceMin,
+          max: formData.experienceMax,
+        },
+        openings: formData.openings,
+        jobCategory: formData.jobCategory,
+      };
+
       if (editingJob) {
         await updateJob(editingJob._id, data);
         toast.success("Job Updated Successfully");
@@ -100,7 +138,7 @@ const DashboardForRecruiter = () => {
 
   const handleDeleteJob = async () => {
     if (!jobToDelete) return;
-    
+
     setIsDeleting(jobToDelete);
     try {
       await deleteJob(jobToDelete);
@@ -118,10 +156,14 @@ const DashboardForRecruiter = () => {
   const handleEditJob = (job: Job) => {
     setEditingJob(job);
     setValue("title", job.title);
-    setValue("description", job.description);
+    setValue("skills", job.skills.join(", "));
     setValue("jobType", job.jobType);
-    setValue("salary", job.salary);
+    setValue("salaryMin", job.salary.min);
+    setValue("salaryMax", job.salary.max);
+    setValue("experienceMin", job.experience.min);
+    setValue("experienceMax", job.experience.max);
     setValue("openings", job.openings);
+    setValue("jobCategory", job.jobCategory);
     setOpen(true);
   };
 
@@ -129,7 +171,9 @@ const DashboardForRecruiter = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="p-4">
-        <ProfileManager />
+        
+        <RecruiterProfileDialog />
+
         <div className="flex justify-end mb-4">
           <Dialog open={open} onOpenChange={(open) => {
             if (!open) {
@@ -159,13 +203,13 @@ const DashboardForRecruiter = () => {
                 </div>
 
                 <div>
-                  <Label>Description</Label>
+                  <Label>Skills</Label>
                   <Textarea
-                    placeholder="Job responsibilities..."
-                    {...register("description")}
+                    placeholder="skills"
+                    {...register("skills")}
                   />
-                  {errors.description && (
-                    <p className="text-red-500 text-sm">{errors.description.message}</p>
+                  {errors.skills && (
+                    <p className="text-red-500 text-sm">{errors.skills.message}</p>
                   )}
                 </div>
 
@@ -185,12 +229,50 @@ const DashboardForRecruiter = () => {
                   )}
                 </div>
 
-                <div>
-                  <Label>Salary</Label>
-                  <Input placeholder="Salary" {...register("salary")} />
-                  {errors.salary && (
-                    <p className="text-red-500 text-sm">{errors.salary.message}</p>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Min Salary (LPA)</Label>
+                    <Input
+                      type="number"
+                      {...register("salaryMin", { valueAsNumber: true })}
+                    />
+                    {errors.salaryMin && (
+                      <p className="text-red-500 text-sm">{errors.salaryMin.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Max Salary (LPA)</Label>
+                    <Input
+                      type="number"
+                      {...register("salaryMax", { valueAsNumber: true })}
+                    />
+                    {errors.salaryMax && (
+                      <p className="text-red-500 text-sm">{errors.salaryMax.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Min Experience (years)</Label>
+                    <Input
+                      type="number"
+                      {...register("experienceMin", { valueAsNumber: true })}
+                    />
+                    {errors.experienceMin && (
+                      <p className="text-red-500 text-sm">{errors.experienceMin.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Max Experience (years)</Label>
+                    <Input
+                      type="number"
+                      {...register("experienceMax", { valueAsNumber: true })}
+                    />
+                    {errors.experienceMax && (
+                      <p className="text-red-500 text-sm">{errors.experienceMax.message}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -205,6 +287,24 @@ const DashboardForRecruiter = () => {
                   )}
                 </div>
 
+                <div>
+                  <Label>Job Category</Label>
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    {...register("jobCategory")}
+                  >
+                    <option value="">Select a category</option>
+                    {jobCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.jobCategory && (
+                    <p className="text-red-500 text-sm">{errors.jobCategory.message}</p>
+                  )}
+                </div>
+
                 <Button
                   type="submit"
                   disabled={isSubmitting}
@@ -213,8 +313,8 @@ const DashboardForRecruiter = () => {
                   {isSubmitting
                     ? "Saving..."
                     : editingJob
-                    ? "Update Job"
-                    : "Post Job"}
+                      ? "Update Job"
+                      : "Post Job"}
                 </Button>
               </form>
             </DialogContent>
@@ -226,8 +326,6 @@ const DashboardForRecruiter = () => {
             <ClipLoader size={50} color="#0000ff" />
           </div>
         )}
-
-        
 
         {jobs.length === 0 && !loading ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -250,51 +348,74 @@ const DashboardForRecruiter = () => {
             {jobs.map((job) => (
               <div
                 key={job._id}
-                className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl"
+                className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition-shadow duration-300"
               >
-                <h2 className="font-semibold text-xl">{job.title}</h2>
-                <p className="text-gray-600 mt-1">{job.description}</p>
-                <div className="mt-3 text-sm text-gray-700">
-                  <p>
-                    Type: <span className="font-medium">{job.jobType}</span>
-                  </p>
-                  <p>
-                    Salary: <span className="font-medium">{job.salary}</span>
-                  </p>
-                  <p>
-                    Openings: <span className="font-medium">{job.openings}</span>
-                  </p>
-                  <p>
-                    Company:{" "}
-                    <span className="font-medium">
-                      {job.recruiterProfile?.companyName}
-                    </span>
-                  </p>
-                  <p>
-                    Location:{" "}
-                    <span className="font-medium">
-                      {job.recruiterProfile?.companyLocation}
-                    </span>
-                  </p>
-                </div>
-                <div className="mt-4 flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    Recruiter: {job.recruiter.name}
-                  </span>
-                  <span className={job.isActive ? "text-green-500" : "text-red-500"}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="font-bold text-xl text-gray-800">{job.title}</h2>
+                    <p className="text-blue-600 font-medium">{job.jobCategory}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${job.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    }`}>
                     {job.isActive ? "Active" : "Inactive"}
                   </span>
                 </div>
+
+                <div className="mt-4 space-y-2">
+                  <div>
+                    <span className="font-semibold">Type:</span>{" "}
+                    <span className="capitalize">{job.jobType.replace("-", " ")}</span>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold">Salary:</span>{" "}
+                    <span>{job.salary.min} - {job.salary.max} LPA</span>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold">Experience:</span>{" "}
+                    <span>{job.experience.min} - {job.experience.max} years</span>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold">Openings:</span>{" "}
+                    <span>{job.openings}</span>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold">Skills:</span>{" "}
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {job.skills.map((skill, index) => (
+                        <span key={index} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <span className="font-semibold">Company:</span>{" "}
+                    <span>{job.recruiterProfile?.companyName}</span>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold">Location:</span>{" "}
+                    <span>{job.recruiterProfile?.companyLocation}</span>
+                  </div>
+                </div>
+
                 <div className="mt-4 flex justify-between">
                   <Button
                     onClick={() => handleEditJob(job)}
-                    className="bg-yellow-500 text-white"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                    size="sm"
                   >
                     Edit
                   </Button>
                   <Button
                     onClick={() => handleDeleteClick(job._id)}
-                    className="bg-red-500 text-white"
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    size="sm"
                     disabled={isDeleting === job._id}
                   >
                     {isDeleting === job._id ? (
@@ -319,15 +440,15 @@ const DashboardForRecruiter = () => {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setDeleteDialogOpen(false)}
                 disabled={!!isDeleting}
               >
                 Cancel
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleDeleteJob}
                 disabled={!!isDeleting}
               >
