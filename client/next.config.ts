@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+// next.config.js
+module.exports = {
+  images: {
+    domains: ['localhost'], // Add your production domain when you deploy
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+      },
+    ],
+  },
 };
-
-export default nextConfig;

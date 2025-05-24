@@ -41,9 +41,9 @@ export const updateRecruiterProfile = async (req, res) => {
       { $set: updateFields },
       { 
         new: true,
-        runValidators: true // Ensure updated data passes model validation
+        runValidators: true
       }
-    ).select('-__v -createdAt -updatedAt'); // Exclude unnecessary fields
+    ).select('-__v -createdAt -updatedAt');
 
     if (!updatedProfile) {
       // Delete the uploaded file if profile not found
@@ -59,7 +59,10 @@ export const updateRecruiterProfile = async (req, res) => {
     // Add full URL for the image if it exists
     const profileWithImageUrl = updatedProfile.toObject();
     if (profileWithImageUrl.profileImage) {
-      profileWithImageUrl.profileImage = `${req.protocol}://${req.get('host')}/${profileWithImageUrl.profileImage.replace(/\\/g, '/')}`;
+      const normalizedPath = profileWithImageUrl.profileImage
+        .replace(/\\/g, '/')
+        .replace('public/', '');
+      profileWithImageUrl.profileImage = `${req.protocol}://${req.get('host')}/${normalizedPath}`;
     }
 
     return res.status(200).json({

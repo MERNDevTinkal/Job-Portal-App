@@ -9,6 +9,10 @@ export const createRecruiterProfile = async (req, res) => {
     try {
       createRecruiterProfileSchema.parse(req.body);
     } catch (error) {
+      // Delete the uploaded file if validation fails
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
       return res.status(400).json({
         success: false,
         message: error.errors[0]?.message || "Validation failed",
@@ -55,12 +59,25 @@ export const createRecruiterProfile = async (req, res) => {
     // Create and save profile
     const profile = await RecruiterProfileModel.create(profileData);
 
+    // Add full URL for the image if it exists
+    const profileWithImageUrl = profile.toObject();
+    if (profileWithImageUrl.profileImage) {
+      const normalizedPath = profileWithImageUrl.profileImage
+        .replace(/\\/g, '/')
+        .replace('public/', '');
+      profileWithImageUrl.profileImage = `${req.protocol}://${req.get('host')}/${normalizedPath}`;
+    }
+
     res.status(201).json({
       success: true,
       message: "Recruiter profile created successfully",
-      profile,
+      profile: profileWithImageUrl,
     });
   } catch (error) {
+    // Delete the uploaded file if error occurs
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
     console.error("Error in creating recruiter profile:", error);
     res.status(500).json({
       success: false,
@@ -69,3 +86,4 @@ export const createRecruiterProfile = async (req, res) => {
     });
   }
 };
+
