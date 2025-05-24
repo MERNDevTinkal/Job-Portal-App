@@ -25,6 +25,7 @@
     "nodemailer": "^7.0.2",
     "npm": "^11.3.0",
     "server": "file:",
+    "uuid": "^11.1.0",
     "zod": "^3.24.4"
   },
   "devDependencies": {

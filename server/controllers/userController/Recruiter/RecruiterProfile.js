@@ -1,5 +1,7 @@
 import RecruiterProfileModel from "../../../models/recruiterProfileModel.js";
 import { createRecruiterProfileSchema } from "../../../validations/recruiterProfileValidation.js";
+import fs from "fs";
+import path from "path";
 
 export const createRecruiterProfile = async (req, res) => {
   try {
@@ -9,29 +11,32 @@ export const createRecruiterProfile = async (req, res) => {
     } catch (error) {
       return res.status(400).json({
         success: false,
-        message: error.errors[0]?.message || "Validation failed"
+        message: error.errors[0]?.message || "Validation failed",
       });
     }
 
-    const { 
-      companyName, 
-      companyWebsite, 
-      companyDescription, 
+    const {
+      companyName,
+      companyWebsite,
+      companyDescription,
       companyLocation,
       country,
       state,
-      profileImage
     } = req.body;
 
     // Check if profile already exists
     const existingProfile = await RecruiterProfileModel.findOne({
-      userId: req.user._id
+      userId: req.user._id,
     });
 
     if (existingProfile) {
+      // Delete the uploaded file if profile already exists
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
       return res.status(400).json({
         success: false,
-        message: "Profile already exists for this user"
+        message: "Profile already exists for this user",
       });
     }
 
@@ -44,7 +49,7 @@ export const createRecruiterProfile = async (req, res) => {
       companyLocation,
       country,
       state,
-      profileImage: profileImage || "" 
+      profileImage: req.file ? req.file.path : null
     };
 
     // Create and save profile
@@ -53,15 +58,14 @@ export const createRecruiterProfile = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Recruiter profile created successfully",
-      profile
+      profile,
     });
-
   } catch (error) {
     console.error("Error in creating recruiter profile:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error.message
+      error: error.message,
     });
   }
 };

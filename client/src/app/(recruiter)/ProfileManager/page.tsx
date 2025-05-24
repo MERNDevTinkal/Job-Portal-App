@@ -1,3 +1,4 @@
+// components/RecruiterProfileDialog.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,23 +23,28 @@ import {
 } from '@/components/ui/dialog';
 import { FcBusinessman } from 'react-icons/fc';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 const indiaStates = ['Delhi', "Bihar", "Rajasthan", 'Maharashtra', 'Karnataka', 'Punjab'];
 const usaStates = ['California', 'New York', 'Texas', 'Florida'];
 
 type FormValues = z.infer<typeof recruiterProfileSchema>;
 
-export default function RecruiterProfileManager() {
+export default function RecruiterProfileDialog() {
   const [states, setStates] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
-  const [profile, setProfile] = useState<FormValues | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState<FormValues | null>(null);
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   const {
     register,
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(recruiterProfileSchema),
@@ -49,7 +55,6 @@ export default function RecruiterProfileManager() {
       companyLocation: '',
       country: 'India',
       state: '',
-      profileImage: '',
     },
   });
 
@@ -59,222 +64,280 @@ export default function RecruiterProfileManager() {
     setStates(selectedCountry === 'USA' ? usaStates : indiaStates);
   }, [selectedCountry]);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await getRecruiterProfile();
-        if (response.success && response.profile) {
-          setProfile(response.profile);
-          reset(response.profile);
-        }
-      } catch (error) {
-        toast.error('Failed to fetch profile');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
 
-    fetchProfile();
-  }, [reset]);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.readyState === 2) {
+          setPreviewImage(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  const removeImage = () => {
+    setPreviewImage(null);
+    setFile(null);
+    setValue('profileImage', '');
+  };
+
+  const fetchProfile = async () => {
+    try {
+      setIsFetchingProfile(true);
+      const response = await getRecruiterProfile();
+      if (response.success && response.profile) {
+        setProfileData(response.profile);
+        reset({
+          companyName: response.profile.companyName || '',
+          companyWebsite: response.profile.companyWebsite || '',
+          companyDescription: response.profile.companyDescription || '',
+          companyLocation: response.profile.companyLocation || '',
+          country: response.profile.country || 'India',
+          state: response.profile.state || '',
+        });
+
+        // Set preview image if exists
+        if (response.profile.profileImage) {
+          setPreviewImage(response.profile.profileImage);
+        }
+      } else {
+        reset(); // Reset to default values if no profile exists
+        setPreviewImage(null);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch profile');
+      console.error(error);
+    } finally {
+      setIsFetchingProfile(false);
+    }
+  };
+
+  const handleOpenChange = async (open: boolean) => {
+    setOpen(open);
+    if (open) {
+      await fetchProfile();
+    } else {
+      setProfileData(null);
+      setPreviewImage(null);
+      setFile(null);
+    }
+  };
 
   const onSubmit = async (values: FormValues) => {
     try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append('companyName', values.companyName);
+      formData.append('companyWebsite', values.companyWebsite);
+      formData.append('companyDescription', values.companyDescription);
+      formData.append('companyLocation', values.companyLocation);
+      formData.append('country', values.country);
+      formData.append('state', values.state);
+
+      if (file) {
+        formData.append('profileImage', file);
+      }
+
       let res;
-      if (profile) {
-        res = await updateRecruiterProfile(values);
+      if (profileData) {
+        res = await updateRecruiterProfile(formData);
       } else {
-        res = await createRecruiterProfile(values);
+        res = await createRecruiterProfile(formData);
       }
 
       if (res.success) {
-        toast.success(`Profile ${profile ? 'updated' : 'created'} successfully`);
-        setProfile(res.profile || values);
+        toast.success(`Profile ${profileData ? 'updated' : 'created'} successfully`);
         setOpen(false);
+        setProfileData(res.profile || null);
       } else {
-        toast.error(res.message || `Failed to ${profile ? 'update' : 'create'} profile`);
+        toast.error(res.message || `Failed to ${profileData ? 'update' : 'create'} profile`);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-20">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {profile ? (
-        <div className="border rounded-lg p-6 space-y-4">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setOpen(true)} className="cursor-pointer">
-                <FcBusinessman className="w-12 h-12" />
-              </button>
-              <h2 className="text-2xl font-bold">{profile.companyName}</h2>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={() => setOpen(true)}
-            >
-              Edit Profile
-            </Button>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" className="flex items-center gap-2">
+          <FcBusinessman className="text-xl" />
+          <span className="hidden sm:inline">Recruiter Profile</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        {isFetchingProfile ? (
+          <div className="flex justify-center items-center h-40">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>
+                {profileData ? 'Your Recruiter Profile' : 'Create Recruiter Profile'}
+              </DialogTitle>
+              <DialogDescription>
+                {profileData
+                  ? 'View and update your recruiter profile information'
+                  : 'Fill in your company details to create a recruiter profile'}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-semibold">Website</h3>
-              <p>{profile.companyWebsite || 'Not provided'}</p>
-            </div>
-            <div>
-              <h3 className="font-semibold">Location</h3>
-              <p>
-                {profile.companyLocation}, {profile.state}, {profile.country}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold">About</h3>
-            <p className="text-gray-600">
-              {profile.companyDescription || 'No description provided'}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 border rounded-lg">
-          <button onClick={() => setOpen(true)} className="cursor-pointer mx-auto">
-            <FcBusinessman className="h-12 w-12" />
-          </button>
-          <h3 className="mt-2 text-lg font-medium">No Recruiter Profile</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Create your recruiter profile to get started.
-          </p>
-          <div className="mt-6">
-            <Button onClick={() => setOpen(true)}>
-              Create Recruiter Profile
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {profile ? 'Update Recruiter Profile' : 'Create Recruiter Profile'}
-            </DialogTitle>
-            <DialogDescription>
-              {profile
-                ? 'Update your recruiter profile information'
-                : 'Fill in your company details to create a recruiter profile'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label>Company Name *</Label>
-              <Input {...register('companyName')} />
-              {errors.companyName && (
-                <p className="text-red-500 text-sm">{errors.companyName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label>Website</Label>
-              <Input {...register('companyWebsite')} placeholder="https://example.com" />
-              {errors.companyWebsite && (
-                <p className="text-red-500 text-sm">{errors.companyWebsite.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label>Description</Label>
-              <Textarea {...register('companyDescription')} rows={4} />
-              {errors.companyDescription && (
-                <p className="text-red-500 text-sm">{errors.companyDescription.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label>Location</Label>
-              <Input {...register('companyLocation')} />
-              {errors.companyLocation && (
-                <p className="text-red-500 text-sm">{errors.companyLocation.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <Label>Country</Label>
-                <select
-                  {...register('country')}
-                  className="border rounded p-2 w-full"
-                >
-                  <option value="India">India</option>
-                  <option value="USA">USA</option>
-                </select>
-                {errors.country && (
-                  <p className="text-red-500 text-sm">{errors.country.message}</p>
+                <Label>Company Name *</Label>
+                <Input
+                  {...register('companyName')}
+                  disabled={isSubmitting}
+                />
+                {errors.companyName && (
+                  <p className="text-red-500 text-sm">{errors.companyName.message}</p>
                 )}
               </div>
 
               <div>
-                <Label>State</Label>
-                <select
-                  {...register('state')}
-                  className="border rounded p-2 w-full"
-                >
-                  <option value="">Select State</option>
-                  {states.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-                {errors.state && (
-                  <p className="text-red-500 text-sm">{errors.state.message}</p>
+                <Label>Website</Label>
+                <Input
+                  {...register('companyWebsite')}
+                  disabled={isSubmitting}
+                  placeholder="https://yourcompany.com"
+                />
+                {errors.companyWebsite && (
+                  <p className="text-red-500 text-sm">{errors.companyWebsite.message}</p>
                 )}
               </div>
-            </div>
 
-            <div>
-              <Label>Profile Image URL (Optional)</Label>
-              <Input
-                {...register('profileImage')}
-                placeholder="https://example.com/image.jpg"
-              />
-              {errors.profileImage && (
-                <p className="text-red-500 text-sm">{errors.profileImage.message}</p>
-              )}
-            </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  {...register('companyDescription')}
+                  disabled={isSubmitting}
+                  rows={4}
+                  placeholder="Tell us about your company..."
+                />
+                {errors.companyDescription && (
+                  <p className="text-red-500 text-sm">{errors.companyDescription.message}</p>
+                )}
+              </div>
 
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {profile ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : profile ? 'Update Profile' : 'Create Profile'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+              <div>
+                <Label>Location</Label>
+                <Input
+                  {...register('companyLocation')}
+                  disabled={isSubmitting}
+                  placeholder="Company physical address"
+                />
+                {errors.companyLocation && (
+                  <p className="text-red-500 text-sm">{errors.companyLocation.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Country</Label>
+                  <select
+                    {...register('country')}
+                    className="border rounded p-2 w-full"
+                    disabled={isSubmitting}
+                  >
+                    <option value="India">India</option>
+                    <option value="USA">USA</option>
+                  </select>
+                  {errors.country && (
+                    <p className="text-red-500 text-sm">{errors.country.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>State</Label>
+                  <select
+                    {...register('state')}
+                    className="border rounded p-2 w-full"
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Select State</option>
+                    {states.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.state && (
+                    <p className="text-red-500 text-sm">{errors.state.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label>Profile Image</Label>
+                {previewImage ? (
+                  <div className="mt-2 space-y-2">
+                    <div className="relative w-32 h-32">
+                      <Image
+                        src={previewImage}
+                        alt="Profile preview"
+                        fill
+                        className="rounded object-cover"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={removeImage}
+                      disabled={isSubmitting}
+                    >
+                      Remove Image
+                    </Button>
+                  </div>
+                ) : (
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={isSubmitting}
+                    className="cursor-pointer"
+                  />
+                )}
+                {errors.profileImage && (
+                  <p className="text-red-500 text-sm">{errors.profileImage.message}</p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isFetchingProfile}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {profileData ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : profileData ? 'Update Profile' : 'Create Profile'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

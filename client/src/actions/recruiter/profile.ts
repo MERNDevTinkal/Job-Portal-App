@@ -1,3 +1,4 @@
+// actions/recruiter/profile.ts
 import axiosInstance from '@/lib/axios';
 import axios from 'axios';
 
@@ -8,12 +9,16 @@ export interface RecruiterProfileData {
   companyLocation: string;
   country: string;
   state: string;
-  profileImage?: string;
+  profileImage?: File | string | null;
 }
 
-export const createRecruiterProfile = async (data: RecruiterProfileData) => {
+export const createRecruiterProfile = async (data: FormData) => {
   try {
-    const response = await axiosInstance.post('/profile/recruiter', data);
+    const response = await axiosInstance.post('/profile/recruiter', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -26,9 +31,13 @@ export const createRecruiterProfile = async (data: RecruiterProfileData) => {
   }
 };
 
-export const updateRecruiterProfile = async (data: RecruiterProfileData) => {
+export const updateRecruiterProfile = async (data: FormData) => {
   try {
-    const response = await axiosInstance.put('/profile/recruiter', data);
+    const response = await axiosInstance.put('/profile/recruiter', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
